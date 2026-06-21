@@ -3,6 +3,8 @@
 namespace App\Livewire\Configuracoes;
 
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -24,8 +26,15 @@ class Index extends Component
 
     public $user_name;
     public $user_email;
+
+    public $current_password_email;
+
+    public $current_password;
     public $password;
     public $password_confirmation;
+
+    public $delete_password;
+    public $delete_confirmation;
 
     public function mount()
     {
@@ -86,32 +95,72 @@ class Index extends Component
 
     public function salvarPerfil()
     {
-        $this->validate([
-            'user_name' => 'required|min:3',
-            'user_email' => 'required|email',
-        ]);
+        $user = auth()->user();
 
-        auth()->user()->update([
+        $rules = [
+            'user_name' => 'required|min:3',
+            'user_email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+        ];
+
+        if ($this->user_email !== $user->email) {
+            $rules['current_password_email'] = 'required|current_password';
+        }
+
+        $this->validate($rules);
+
+        $user->update([
             'name' => $this->user_name,
             'email' => $this->user_email,
         ]);
 
-        session()->flash('success', 'Perfil atualizado!');
+        $this->reset('current_password_email');
+
+        session()->flash('success', 'Perfil atualizado com sucesso!');
     }
 
     public function alterarSenha()
     {
         $this->validate([
-            'password' => 'required|min:8|confirmed',
+            'current_password' => 'required|current_password',
+            'password' => 'required|min:8|confirmed|different:current_password',
         ]);
 
         auth()->user()->update([
             'password' => Hash::make($this->password),
         ]);
 
-        $this->reset(['password', 'password_confirmation']);
+        $this->reset([
+            'current_password',
+            'password',
+            'password_confirmation',
+        ]);
 
-        session()->flash('success', 'Senha alterada com sucesso!');
+        session()->flash('success', 'Senha alterada com segurança!');
+    }
+
+    public function excluirConta()
+    {
+        $this->validate([
+            'delete_password' => 'required|current_password',
+            'delete_confirmation' => 'required|in:EXCLUIR',
+        ], [
+            'delete_confirmation.in' => 'Digite exatamente EXCLUIR para confirmar.',
+        ]);
+
+        $empresa = auth()->user()->empresa;
+
+        Auth::logout();
+
+        $empresa->delete();
+
+        session()->invalidate();
+        session()->regenerateToken();
+
+        return redirect()->route('home');
     }
 
     public function render()

@@ -2,23 +2,24 @@
 
 namespace App\Livewire\Assinatura;
 
+use App\Models\Pagamento;
 use Livewire\Component;
 
 class Index extends Component
 {
-    public function alterarPlano($plano)
-    {
-        auth()->user()->empresa->update([
-            'plano' => $plano,
-        ]);
-
-        session()->flash('success', 'Plano alterado com sucesso!');
-    }
-
     public function render()
     {
+        $empresa = auth()->user()->empresa;
+
+        $trialEnds = $empresa->trial_ends_at;
+        $diasTrial = $trialEnds ? max(0, ceil(now()->diffInHours($trialEnds, false) / 24)) : 0;
+
         return view('livewire.assinatura.index', [
-            'empresa' => auth()->user()->empresa,
+            'empresa' => $empresa,
+            'diasTrial' => $diasTrial,
+            'pagamentos' => Pagamento::where('empresa_id', $empresa->id)
+                ->latest()
+                ->get(),
         ])->layout('layouts.app');
     }
 }

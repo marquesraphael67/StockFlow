@@ -1,77 +1,85 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 use App\Livewire\Dashboard;
+use App\Livewire\Auth\RegisterEmpresa;
+use App\Livewire\Categorias\Index as CategoriaIndex;
+use App\Livewire\Produtos\Index as ProdutoIndex;
+use App\Livewire\Movimentacoes\Index as MovimentacaoIndex;
+use App\Livewire\Clientes\Index as ClienteIndex;
+use App\Livewire\Vendas\Index as VendaIndex;
+use App\Livewire\Relatorios\Index as RelatorioIndex;
+use App\Livewire\Assinatura\Index as AssinaturaIndex;
+use App\Livewire\Configuracoes\Index as ConfiguracaoIndex;
+use App\Http\Controllers\RelatorioPdfController;
+use App\Livewire\Usuarios\Index as UsuarioIndex;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+Route::get('/cadastro', RegisterEmpresa::class)
+    ->name('cadastro');
+
 Route::get('/dashboard', Dashboard::class)
-    ->middleware(['auth'])
+    ->middleware(['auth', 'trial'])
     ->name('dashboard');
 
 Route::get('/checkout', function () {
     return view('checkout');
-})->middleware('auth')->name('checkout');
-
-use App\Livewire\Auth\RegisterEmpresa;
-
-Route::get('/cadastro', RegisterEmpresa::class)
-    ->name('cadastro');
-
-use App\Livewire\Categorias\Index as CategoriaIndex;
+})->middleware(['auth'])->name('checkout');
 
 Route::get('/categorias', CategoriaIndex::class)
-    ->middleware('auth')
+    ->middleware(['auth', 'trial'])
     ->name('categorias.index');
 
-    use App\Livewire\Produtos\Index as ProdutoIndex;
-
 Route::get('/produtos', ProdutoIndex::class)
-    ->middleware('auth')
+    ->middleware(['auth', 'trial'])
     ->name('produtos.index');
 
-use App\Livewire\Movimentacoes\Index as MovimentacaoIndex;
-
 Route::get('/movimentacoes', MovimentacaoIndex::class)
-    ->middleware('auth')
+    ->middleware(['auth', 'trial'])
     ->name('movimentacoes.index');
 
-use App\Livewire\Clientes\Index as ClienteIndex;
-
 Route::get('/clientes', ClienteIndex::class)
-    ->middleware('auth')
+    ->middleware(['auth', 'trial'])
     ->name('clientes.index');
 
-use App\Livewire\Vendas\Index as VendaIndex;
-
 Route::get('/vendas', VendaIndex::class)
-    ->middleware('auth')
+    ->middleware(['auth', 'trial'])
     ->name('vendas.index');
 
-use App\Livewire\Relatorios\Index as RelatorioIndex;
-
 Route::get('/relatorios', RelatorioIndex::class)
-    ->middleware('auth')
+    ->middleware(['auth', 'trial'])
     ->name('relatorios.index');
 
-    use App\Livewire\Assinatura\Index as AssinaturaIndex;
-
-Route::get('/assinatura', AssinaturaIndex::class)
-    ->middleware('auth')
-    ->name('assinatura.index');
-
-    use App\Livewire\Configuracoes\Index as ConfiguracaoIndex;
-
-Route::get('/configuracoes', ConfiguracaoIndex::class)
-    ->middleware('auth')
-    ->name('configuracoes.index');
-
-    use App\Http\Controllers\RelatorioPdfController;
-
 Route::get('/relatorios/pdf', [RelatorioPdfController::class, 'vendas'])
-    ->middleware('auth')
+    ->middleware(['auth', 'trial'])
     ->name('relatorios.pdf');
 
+Route::get('/configuracoes', ConfiguracaoIndex::class)
+    ->middleware(['auth', 'trial', 'admin'])
+    ->name('configuracoes.index');
+
+Route::get('/assinatura', AssinaturaIndex::class)
+    ->middleware(['auth', 'admin'])
+    ->name('assinatura.index');
+
+Route::get('/usuarios', UsuarioIndex::class)
+    ->middleware(['auth', 'trial', 'admin'])
+    ->name('usuarios.index');
+
+
+use App\Http\Controllers\MercadoPagoController;
+
+Route::post('/checkout/pix', [MercadoPagoController::class, 'gerarPix'])
+    ->middleware('auth')
+    ->name('checkout.pix.gerar');
+
+Route::get('/checkout/pix/{id}', [MercadoPagoController::class, 'pix'])
+    ->middleware('auth')
+    ->name('checkout.pix');
+
+    
 require __DIR__ . '/auth.php';

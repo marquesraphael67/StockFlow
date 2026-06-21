@@ -37,7 +37,7 @@ class RegisterEmpresa extends Component
         $empresa = Empresa::create([
             'nome' => $this->empresa_nome,
             'email' => $this->email,
-            'plano' => $this->plano,
+            'plano' => 'basico',
             'status' => 'trial',
             'trial_ends_at' => now()->addDays(7),
             'ativo' => true,
@@ -56,8 +56,8 @@ class RegisterEmpresa extends Component
     }
 
     public function render()
-{
-    return view('livewire.auth.register-empresa')
-        ->layout('layouts.auth-bootstrap');
-}
+    {
+        return view('livewire.auth.register-empresa')
+            ->layout('layouts.auth-bootstrap');
+    }
 }

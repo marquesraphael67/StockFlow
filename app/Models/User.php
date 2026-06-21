@@ -9,18 +9,27 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Notifications\ResetPasswordStockFlow;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    public function sendPasswordResetNotification($token): void
+{
+    $this->notify(new ResetPasswordStockFlow($token));
+}
+
     protected $fillable = [
         'empresa_id',
         'name',
         'email',
         'password',
+        'tipo',
     ];
+
+    
 
     protected $hidden = [
         'password',

@@ -13,6 +13,9 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'mercadopago' => [
+    'access_token' => env('MERCADO_PAGO_ACCESS_TOKEN'),
+],
 
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
