@@ -13,16 +13,23 @@ class CheckTrial
         $empresa = auth()->user()->empresa;
 
         if (!$empresa) {
-            return redirect()->route('login');
+            return redirect()->route('home');
         }
 
-        if ($empresa->status === 'trial' && $empresa->trial_ends_at && now()->greaterThan($empresa->trial_ends_at)) {
-            if (!$request->routeIs('assinatura.index') && !$request->routeIs('logout')) {
-                session()->flash('erro', 'Seu período de teste expirou. Escolha um plano para continuar usando o StockFlow.');
-                return redirect()->route('assinatura.index');
-            }
+        if ($empresa->status === 'ativo') {
+            return $next($request);
         }
 
-        return $next($request);
+        if ($empresa->status === 'trial' && $empresa->trial_ends_at && now()->lessThanOrEqualTo($empresa->trial_ends_at)) {
+            return $next($request);
+        }
+
+        $empresa->update([
+            'status' => 'expirado',
+            'ativo' => false,
+        ]);
+
+        return redirect()->route('assinatura.index')
+            ->with('erro', 'Seu teste grátis expirou. Escolha um plano para continuar usando o StockFlow.');
     }
 }

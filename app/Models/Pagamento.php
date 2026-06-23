@@ -15,4 +15,9 @@ class Pagamento extends Model
         'qr_code',
         'qr_code_base64',
     ];
+
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class);
+    }
 }

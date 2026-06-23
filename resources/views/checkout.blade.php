@@ -3,9 +3,21 @@
         $plano = request('plano', auth()->user()->empresa->plano ?? 'basico');
 
         $planos = [
-            'basico' => ['nome' => 'Básico', 'valor' => 39, 'descricao' => '1 usuário, até 500 produtos e controle de estoque.'],
-            'pro' => ['nome' => 'Pro', 'valor' => 79, 'descricao' => 'Até 5 usuários, produtos ilimitados, dashboard avançado e relatórios.'],
-            'premium' => ['nome' => 'Premium', 'valor' => 149, 'descricao' => 'Usuários ilimitados, relatórios PDF, dashboard premium e suporte prioritário.'],
+            'basico' => [
+                'nome' => 'Básico',
+                'valor' => 39,
+                'descricao' => '1 usuário, até 500 produtos e controle de estoque.'
+            ],
+            'pro' => [
+                'nome' => 'Pro',
+                'valor' => 79,
+                'descricao' => 'Até 5 usuários, produtos ilimitados, dashboard avançado e relatórios.'
+            ],
+            'premium' => [
+                'nome' => 'Premium',
+                'valor' => 149,
+                'descricao' => 'Usuários ilimitados, relatórios PDF, dashboard premium e suporte prioritário.'
+            ],
         ];
 
         $planoAtual = $planos[$plano] ?? $planos['basico'];
@@ -13,6 +25,14 @@
 
     <div class="row justify-content-center">
         <div class="col-lg-10">
+
+            @if(session('erro'))
+                <div class="alert alert-danger border-0 shadow-sm mb-4">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    {{ session('erro') }}
+                </div>
+            @endif
+
             <div class="mb-4">
                 <h1 class="fw-bold mb-1">Finalizar assinatura</h1>
                 <p class="text-muted mb-0">Escolha a forma de pagamento e ative seu plano.</p>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pagamento;
 use Illuminate\Http\Request;
 use MercadoPago\Client\Payment\PaymentClient;
+use MercadoPago\Exceptions\MPApiException;
 use MercadoPago\MercadoPagoConfig;
 
 class MercadoPagoController extends Controller
@@ -28,15 +29,21 @@ class MercadoPagoController extends Controller
 
         $client = new PaymentClient();
 
-        $payment = $client->create([
-            "transaction_amount" => $valor,
-            "description" => "Assinatura StockFlow - Plano " . ucfirst($plano),
-            "payment_method_id" => "pix",
-            "payer" => [
-                "email" => auth()->user()->email,
-                "first_name" => auth()->user()->name,
-            ],
-        ]);
+        try {
+            $payment = $client->create([
+                'transaction_amount' => (float) $valor,
+                'description' => 'Assinatura StockFlow - Plano ' . ucfirst($plano),
+                'payment_method_id' => 'pix',
+                'payer' => [
+                    'email' => 'comprador_stockflow@test.com',
+                    'first_name' => auth()->user()->name,
+                ],
+            ]);
+        } catch (MPApiException $e) {
+            return redirect()
+                ->route('checkout', ['plano' => $plano])
+                ->with('erro', 'O Mercado Pago está instável no momento. Tente gerar o PIX novamente em alguns minutos.');
+        }
 
         $pagamento = Pagamento::create([
             'empresa_id' => auth()->user()->empresa_id,

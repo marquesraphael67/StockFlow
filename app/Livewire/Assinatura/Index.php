@@ -14,9 +14,14 @@ class Index extends Component
         $trialEnds = $empresa->trial_ends_at;
         $diasTrial = $trialEnds ? max(0, ceil(now()->diffInHours($trialEnds, false) / 24)) : 0;
 
+        $ultimoPagamento = Pagamento::where('empresa_id', $empresa->id)
+            ->latest()
+            ->first();
+
         return view('livewire.assinatura.index', [
             'empresa' => $empresa,
             'diasTrial' => $diasTrial,
+            'ultimoPagamento' => $ultimoPagamento,
             'pagamentos' => Pagamento::where('empresa_id', $empresa->id)
                 ->latest()
                 ->get(),
