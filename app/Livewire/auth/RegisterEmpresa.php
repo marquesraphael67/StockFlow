@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Auth;
 
+use App\Models\Assinatura;
 use App\Models\Empresa;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 
@@ -19,7 +21,7 @@ class RegisterEmpresa extends Component
 
     public function mount()
     {
-        if (request()->has('plano')) {
+        if (request()->has('plano') && in_array(request('plano'), ['basico', 'pro', 'premium'])) {
             $this->plano = request('plano');
         }
     }
@@ -34,23 +36,37 @@ class RegisterEmpresa extends Component
             'plano' => 'required|in:basico,pro,premium',
         ]);
 
-        $empresa = Empresa::create([
-            'nome' => $this->empresa_nome,
-            'email' => $this->email,
-            'plano' => 'basico',
-            'status' => 'trial',
-            'trial_ends_at' => now()->addDays(7),
-            'ativo' => true,
-        ]);
+        DB::transaction(function () {
+            $empresa = Empresa::create([
+                'nome' => $this->empresa_nome,
+                'email' => $this->email,
 
-        $user = User::create([
-            'empresa_id' => $empresa->id,
-            'name' => $this->responsavel_nome,
-            'email' => $this->email,
-            'password' => Hash::make($this->password),
-        ]);
+                // Todo cadastro começa no plano básico grátis
+                'plano' => 'basico',
+                'status' => 'trial',
+                'trial_ends_at' => now()->addDays(7),
+                'ativo' => true,
+            ]);
 
-        Auth::login($user);
+            Assinatura::create([
+                'empresa_id' => $empresa->id,
+                'plano' => 'basico',
+                'valor' => 0,
+                'status' => 'trial',
+                'data_inicio' => now(),
+                'data_expiracao' => now()->addDays(7),
+            ]);
+
+            $user = User::create([
+                'empresa_id' => $empresa->id,
+                'name' => $this->responsavel_nome,
+                'email' => $this->email,
+                'password' => Hash::make($this->password),
+                'tipo' => 'admin',
+            ]);
+
+            Auth::login($user);
+        });
 
         return redirect()->route('dashboard');
     }

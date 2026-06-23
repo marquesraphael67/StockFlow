@@ -56,4 +56,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
         ->name('checkout.pix');
 });
 
+// WEBHOOK FORA DO AUTH
+Route::post('/webhook/mercadopago', [MercadoPagoController::class, 'webhook'])
+    ->name('mercadopago.webhook');
+
 require __DIR__ . '/auth.php';

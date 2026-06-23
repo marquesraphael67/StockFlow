@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Assinatura;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -10,19 +11,40 @@ class CheckTrial
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $empresa = auth()->user()->empresa;
+        $user = auth()->user();
 
-        if (!$empresa) {
+        if (!$user || !$user->empresa) {
             return redirect()->route('home');
         }
 
-        if ($empresa->status === 'ativo') {
+        $empresa = $user->empresa;
+
+        $assinatura = Assinatura::where('empresa_id', $empresa->id)
+            ->latest()
+            ->first();
+
+        if (!$assinatura) {
+            $assinatura = Assinatura::create([
+                'empresa_id' => $empresa->id,
+                'plano' => 'basico',
+                'valor' => 0,
+                'status' => 'trial',
+                'data_inicio' => now(),
+                'data_expiracao' => now()->addDays(7),
+            ]);
+        }
+
+        if (
+            in_array($assinatura->status, ['trial', 'ativo']) &&
+            $assinatura->data_expiracao &&
+            now()->lessThanOrEqualTo($assinatura->data_expiracao)
+        ) {
             return $next($request);
         }
 
-        if ($empresa->status === 'trial' && $empresa->trial_ends_at && now()->lessThanOrEqualTo($empresa->trial_ends_at)) {
-            return $next($request);
-        }
+        $assinatura->update([
+            'status' => 'expirado',
+        ]);
 
         $empresa->update([
             'status' => 'expirado',
@@ -30,6 +52,6 @@ class CheckTrial
         ]);
 
         return redirect()->route('assinatura.index')
-            ->with('erro', 'Seu teste grátis expirou. Escolha um plano para continuar usando o StockFlow.');
+            ->with('erro', 'Sua assinatura expirou. Escolha um plano para continuar usando o StockFlow.');
     }
 }
